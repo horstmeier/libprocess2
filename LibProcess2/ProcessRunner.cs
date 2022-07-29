@@ -31,18 +31,16 @@ public class ProcessRunner
             RedirectStandardOutput = onOut != null,
             WindowStyle = ProcessWindowStyle.Hidden
         };
-        var sb = new StringBuilder().Append(fileName).Append(' ');
         foreach (var argument in arguments)
         {
-            sb.Append(argument).Append(' ');
             psi.ArgumentList.Add(argument);
         }
-        _log?.LogDebug("Starting process {CmdLine}", sb);
         var process = new Process
         {
             EnableRaisingEvents = true,
             StartInfo = psi
         };
+        _log?.LogDebug("Starting process {Cmd} {CmdLine}", psi.FileName, psi.Arguments);
         var semaOutput = new SemaphoreSlim(0);
         process.OutputDataReceived += (sender, e) =>
         {
@@ -73,13 +71,14 @@ public class ProcessRunner
         {
             throw new Exception("Failed to start process");
         }
-
+        if (psi.RedirectStandardError) process.BeginErrorReadLine();
+        if (psi.RedirectStandardOutput) process.BeginOutputReadLine();
         _log?.LogDebug("Waiting for process to terminate");
         try
         {
             await process.WaitForExitAsync(ct);
-            await semaError.WaitAsync(ct);
-            await semaOutput.WaitAsync(ct);
+            if (psi.RedirectStandardError) await semaError.WaitAsync(ct);
+            if (psi.RedirectStandardOutput) await semaOutput.WaitAsync(ct);
         }
         catch (Exception e)
         {
