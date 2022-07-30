@@ -24,7 +24,7 @@ public class TestProcessRunner
                 "/c",
                 scriptFile
             }, null, s => sb.AppendLine(s));
-            Assert.That("Hello", Is.EqualTo(sb.ToString().Trim()));
+            Assert.That(sb.ToString().Trim(), Is.EqualTo("Hello"));
         }
         finally
         {

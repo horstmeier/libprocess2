@@ -16,12 +16,31 @@ public class BatchProcessor
     public async Task<(int exitCode, string stdOut, string stdErr)> Run(
         FileInfo batchFile,
         IEnumerable<string> arguments,
+        string? workingDirectory = null,
         CancellationToken? cancellationToken = null) =>
         await _processRunner.RunWithResult(
             _comspec,
             arguments.Aggregate(ImmutableList<string>.Empty.Add("/c"),
                 (acc, it) => acc.Add(it)),
-            batchFile.DirectoryName,
+            workingDirectory ?? batchFile.DirectoryName,
             cancellationToken,
             null);
+
+    public async Task<(int exitCode, string stdOut, string stdErr)> Execute(
+        string command,
+        string? workingDirectory = null,
+        CancellationToken? cancellationToken = null)
+    {
+        var file = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".cmd");
+        await File.WriteAllTextAsync(file, command);
+        try
+        {
+            return await Run(new FileInfo(file), Array.Empty<string>(), workingDirectory, cancellationToken);
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
 }
