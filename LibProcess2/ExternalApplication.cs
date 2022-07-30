@@ -1,4 +1,6 @@
-﻿namespace LibProcess2;
+﻿using System.Text;
+
+namespace LibProcess2;
 
 public class ExternalApplication
 {
@@ -30,9 +32,8 @@ public class ExternalApplication
         string? workingDirectory = null,
         CancellationToken? cancellationToken = null,
         Func<int, bool>? isSuccess = null
-    )
-    {
-        return await _processRunner.Run(
+    ) =>
+        await _processRunner.Run(
             _fileName,
             arguments,
             workingDirectory ?? _defaultWorkingDirectory,
@@ -40,6 +41,33 @@ public class ExternalApplication
             _onErr,
             cancellationToken,
             isSuccess ?? _defaultIsSuccess);
-    }
 
+    public async Task<(int exitCode, string stdOut, string stdErr)> RunWithResult(
+        IEnumerable<string> arguments,
+        string? workingDirectory = null,
+        CancellationToken? cancellationToken = null,
+        Func<int, bool>? isSuccess = null
+    )
+    {
+        var sbOut = new StringBuilder();
+        var sbErr = new StringBuilder();
+
+        var exitCode = await _processRunner.Run(
+            _fileName,
+            arguments,
+            workingDirectory ?? _defaultWorkingDirectory,
+            s =>
+            {
+                _onOut?.Invoke(s);
+                sbOut.AppendLine(s);
+            },
+            s =>
+            {
+                _onErr?.Invoke(s);
+                sbErr.AppendLine(s);
+            },
+            cancellationToken,
+            isSuccess ?? _defaultIsSuccess);
+        return (exitCode, sbOut.ToString(), sbErr.ToString());
+    }
 }
