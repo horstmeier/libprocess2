@@ -60,6 +60,19 @@ for robocopy (I think at least, that was how robocopy worked).
 The constructor of ProcessRunner accepts an `ILogger` that will, if provided be used to add some log messages.
 These log messages may or may not be what you need. They are just, what I usually want to see in the log file.
 
+The extension method `RunWithResult` returns stdOut and stdErr as strings. The syntax is:
+
+```C#
+Task<(int exitCode, string stdOut, string stdErr)> RunWithResult(
+        this IProcessRunner processRunner,
+        string fileName,
+        IEnumerable<string> arguments,
+        string? workingDirectory = null,
+        CancellationToken? cancellationToken = null,
+        Func<int, bool>? isSuccess = null
+    )
+```
+
 ## ExternalApplication
 
 Frequently you may want to call the same application with different arguments. This is what the class 
@@ -90,3 +103,14 @@ Task<int> Run(
 
 The `defaultWorkingDirectory` and the `defaultIsSuccess` parameters will be used if the values in the `Run` call
 are null.
+
+The method `RunWithResult` returns stdout and stderr as strings. The syntax is:
+
+```C#
+Task<(int exitCode, string stdOut, string stdErr)> RunWithResult(
+        IEnumerable<string> arguments,
+        string? workingDirectory = null,
+        CancellationToken? cancellationToken = null,
+        Func<int, bool>? isSuccess = null
+    )
+```
