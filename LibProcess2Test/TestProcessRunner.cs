@@ -59,4 +59,31 @@ public class TestProcessRunner
             File.Delete(scriptFile);
         }
     }
+
+    [Test]
+    public async Task TestIsSuccess()
+    {
+        var processRunner = new ProcessRunner();
+        var sb = new StringBuilder();
+        var cts = new CancellationTokenSource();
+        await processRunner.Run("C:/program files/powershell/7/pwsh.exe", new[]
+        {
+            "/c",
+            "exit 9"
+        }, null, s => sb.AppendLine(s), null, cts.Token);
+
+        await processRunner.Run("C:/program files/powershell/7/pwsh.exe", new[]
+        {
+            "/c",
+            "exit 9"
+        }, null, s => sb.AppendLine(s), null, cts.Token, n => n == 9);
+
+        var task = processRunner.Run("C:/program files/powershell/7/pwsh.exe", new[]
+        {
+            "/c",
+            "exit 9"
+        }, null, s => sb.AppendLine(s), null, cts.Token, n => n != 9);
+
+        Assert.CatchAsync(async () => await task);
+    }
 }

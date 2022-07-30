@@ -3,7 +3,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 
 namespace LibProcess2;
-public class ProcessRunner
+public class ProcessRunner : IProcessRunner
 {
     private readonly ILogger<ProcessRunner>? _log;
 
@@ -87,6 +87,11 @@ public class ProcessRunner
             throw;
         }
         _log?.LogDebug("Process exited with {ExitCode}", process.ExitCode);
+        if (isSuccess != null && !isSuccess(process.ExitCode))
+        {
+            throw new Exception($"{fileName} returned error {process.ExitCode}");
+        }
+
         return process.ExitCode;
     }
 }
