@@ -2,6 +2,9 @@
 
 The library helps executing external applications.
 
+[![.NET](https://github.com/horstmeier/libprocess2/actions/workflows/dotnet.yml/badge.svg)](https://github.com/horstmeier/libprocess2/actions/workflows/dotnet.yml)
+
+
 ## Motivation
 
 I have to call external applications frequently in my projects thus I wanted
