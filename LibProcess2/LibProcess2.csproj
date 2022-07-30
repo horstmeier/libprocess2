@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
-        <Version>0.1-master.0</Version>
+        <Version>1.0</Version>
         <Title>Library for  running generic and git processes</Title>
         <Authors>Jens Horstmeier</Authors>
         <Copyright>(C) 2022 by Jens Horstmeier</Copyright>
