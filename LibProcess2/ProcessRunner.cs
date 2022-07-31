@@ -40,7 +40,8 @@ public class ProcessRunner : IProcessRunner
             EnableRaisingEvents = true,
             StartInfo = psi
         };
-        _log?.LogDebug("Starting process {Cmd} {CmdLine}", psi.FileName, psi.Arguments);
+        var argText = psi.Arguments.Aggregate(new StringBuilder(), (acc, it) => acc.Append(it).Append(' '));
+        _log?.LogDebug("Starting process {Cmd} {CmdLine}", psi.FileName, argText);
         var semaOutput = new SemaphoreSlim(0);
         process.OutputDataReceived += (sender, e) =>
         {
