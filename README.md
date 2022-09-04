@@ -1,6 +1,5 @@
 # libprocess2
 
-[![Build Status](https://travis-ci.org/erlang/libprocess2.svg?branch=master)](https://travis-ci.org/erlang/libprocess2)
 The library helps executing external applications.
 
 ## Motivation
