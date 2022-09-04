@@ -1,8 +1,39 @@
 ﻿using System.Diagnostics;
-using System.Text;
 using Microsoft.Extensions.Logging;
 
 namespace LibProcess2;
+
+internal class ProcessArguments
+{
+    private readonly string? _arguments;
+    private readonly IEnumerable<string>? _argumentsList;
+    public ProcessArguments(string arguments)
+    {
+        _arguments = arguments;
+        _argumentsList = null;
+    }
+
+    public ProcessArguments(IEnumerable<string> argumentsList)
+    {
+        _arguments = null;
+        _argumentsList = argumentsList;
+    }
+
+    public void Fill(ProcessStartInfo startInfo)
+    {
+        if (_arguments != null)
+        {
+            startInfo.Arguments = _arguments;
+        }
+        else if (_argumentsList != null)
+        {
+            foreach (var arg in _argumentsList)
+            {
+                startInfo.ArgumentList.Add(arg);
+            }
+        }
+    }
+}
 public class ProcessRunner : IProcessRunner
 {
     private readonly ILogger<ProcessRunner>? _log;
@@ -22,6 +53,43 @@ public class ProcessRunner : IProcessRunner
         Func<int, bool>? isSuccess = null
     )
     {
+        return await InternalRun(fileName,
+            new ProcessArguments(arguments),
+            workingDirectory,
+            onOut,
+            onErr,
+            cancellationToken,
+            isSuccess);
+    }
+    public async Task<int> Run(
+        string fileName,
+        string arguments,
+        string? workingDirectory = null,
+        Action<string?>? onOut = null,
+        Action<string?>? onErr = null,
+        CancellationToken? cancellationToken = null,
+        Func<int, bool>? isSuccess = null
+    )
+    {
+        return await InternalRun(fileName,
+            new ProcessArguments(arguments),
+            workingDirectory,
+            onOut,
+            onErr,
+            cancellationToken,
+            isSuccess);
+    }
+
+    private async Task<int> InternalRun(
+        string fileName,
+        ProcessArguments arguments,
+        string? workingDirectory = null,
+        Action<string?>? onOut = null,
+        Action<string?>? onErr = null,
+        CancellationToken? cancellationToken = null,
+        Func<int, bool>? isSuccess = null
+    )
+    {
         var ct = cancellationToken ?? CancellationToken.None;
         var psi = new ProcessStartInfo
         {
@@ -31,10 +99,7 @@ public class ProcessRunner : IProcessRunner
             RedirectStandardOutput = onOut != null,
             WindowStyle = ProcessWindowStyle.Hidden
         };
-        foreach (var argument in arguments)
-        {
-            psi.ArgumentList.Add(argument);
-        }
+        arguments.Fill(psi);
         var process = new Process
         {
             EnableRaisingEvents = true,
@@ -79,16 +144,18 @@ public class ProcessRunner : IProcessRunner
             await process.WaitForExitAsync(ct);
             if (psi.RedirectStandardError) await semaError.WaitAsync(ct);
             if (psi.RedirectStandardOutput) await semaOutput.WaitAsync(ct);
+            process.Close();
         }
         catch (Exception e)
         {
-            _log?.LogWarning(e, "Received exception while waiting for process");
+            _log?.LogError(e, "Error while waiting for process to terminate");
             if (!process.HasExited) process.Kill();
             throw;
         }
-        _log?.LogDebug("Process exited with {ExitCode}", process.ExitCode);
+        _log?.LogDebug("Process terminated with exit code {ExitCode}", process.ExitCode);
         if (isSuccess != null && !isSuccess(process.ExitCode))
         {
+            
             throw new Exception($"{fileName} returned error {process.ExitCode}");
         }
 
